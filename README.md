@@ -10,3 +10,5 @@ C.K.'s Auto-Port Clothing to Bondage tool is designed to help ease the porting p
 I will be making updates to the addon to help make it easier to use, add more flags, functionalizing and even possibly more ease of use & smart detection.
 
 All you should need to do is download the zip in the releases and import it into blender. If you dont trust the code feel free to examine the code here. My horrible functionalization lol because i've barely touched python in my life.
+
+![](https://github.com/OasisAnimos/auto-port-clothing-to-bondage/blob/main/showcaseGIF/ah4.gif)
