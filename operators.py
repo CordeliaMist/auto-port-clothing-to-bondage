@@ -256,7 +256,9 @@ class BlendSkinGroupZero(bpy.types.Operator):
 					If you already have, just CTRL+Z to before you pressed the button and use this first!\n\
 					IMPORTANT NOTE: your skin group MUST be in Part 0.X for this to work!"
 	def execute(self, context):
-		bpy.ops.object.mode_set(mode='OBJECT')
+		# check to see if in object mode and/or set to object mode.
+		set_object_mode()
+		
 		# typical get full list under n_root, but this time only put Part 0.0 objects in it.
 		collection = bpy.data.collections.get("Clothing Mod")
 		armature_obj = collection.objects['n_root'] # Creating the n_root armature object
@@ -373,37 +375,40 @@ def perform_locked_weight_transfers():
 		# This FOR-loop will create the same number of modifiers that the MODIFIER SOURCE mesh object has
 		# and then perform the actions within for each modifier
 		for modif in modifiersource_obj.modifiers:
-			# Create the modifier (referencing to add the same modifier as the one in MODIFIER SOURCE
-			mesh_obj.modifiers.new(modif.name, modif.type)
-			# declare the modifier we are now interfacing with will be Part 0.0's "i'th" modifier
-			# This modifier index[-1] means the top modifier on the list. [-2] would mean the second to top
-			dest_mod = mesh_obj.modifiers[-1]
-
-			#next, check if the modifier used to anchor the bondage is a vertex group in the mesh
-			if modif.vertex_group_a not in mesh_obj.vertex_groups:
-				# then append the bondage bone to it
-				mesh_obj.vertex_groups.new(name=modif.vertex_group_a)
-
-			#then for each propertiy in the mod keys set the attributes
-			dest_mod.vertex_group_a = modif.vertex_group_a
-			dest_mod.vertex_group_b = modif.vertex_group_b
-
+			# Set a tmp vert group for later
 			tmp_vertgroup = None
-			# check if the vertex group B applied
-			if dest_mod.vertex_group_b == modif.vertex_group_b:
-				# assign tmpvertgroup so it is retained after modifier is applied. 
-				tmp_vertgroup = modif.vertex_group_b
-			# set remaining properties for the modifier
-			dest_mod.mix_set = modif.mix_set
-			dest_mod.mix_mode = modif.mix_mode
+			# Call this statement to see if the modifiers vert group is even in the obj's verts
+			if modif.vertex_group_b in mesh_obj.vertex_groups:
+				# Create the modifier (referencing to add the same modifier as the one in MODIFIER SOURCE
+				mesh_obj.modifiers.new(modif.name, modif.type)
+				# declare the modifier we are now interfacing with will be Part 0.0's "i'th" modifier
+				# This modifier index[-1] means the top modifier on the list. [-2] would mean the second to top
+				dest_mod = mesh_obj.modifiers[-1]
+	
+				#next, check if the modifier used to anchor the bondage is a vertex group in the mesh
+				if modif.vertex_group_a not in mesh_obj.vertex_groups:
+					# then append the bondage bone to it
+					mesh_obj.vertex_groups.new(name=modif.vertex_group_a)
 
-			# apply the modifier we just worked on
-			bpy.ops.object.modifier_apply(modifier=dest_mod.name)
+				#then for each propertiy in the mod keys set the attributes
+				dest_mod.vertex_group_a = modif.vertex_group_a
+				dest_mod.vertex_group_b = modif.vertex_group_b
+
+				# check if the vertex group B applied
+				if dest_mod.vertex_group_b == modif.vertex_group_b:
+					# assign tmpvertgroup so it is retained after modifier is applied. 
+					tmp_vertgroup = modif.vertex_group_b
+				# set remaining properties for the modifier
+				dest_mod.mix_set = modif.mix_set
+				dest_mod.mix_mode = modif.mix_mode
+
+				# apply the modifier we just worked on
+				bpy.ops.object.modifier_apply(modifier=dest_mod.name)
 
 			# then if it applied new weights from a vertex, remove that vertex group from the mesh
 			if tmp_vertgroup != None:
 				mesh_obj.vertex_groups.remove(mesh_obj.vertex_groups[tmp_vertgroup])
-
+	
 ''' Func 4: Prepare newly bound cloth for export'''
 # helper function
 def helper_replace_name(obj, new_partname):
@@ -481,6 +486,56 @@ class AutoPortCtB(bpy.types.Operator):
 		# Done
 		return {'FINISHED'}
 
+# Helper function to do the same for the selected hand object
+def perform_locked_weight_transfers_hands(mesh_obj):
+	# Locate the modifier source OBJ and store it
+	for obj in bpy.data.collections["Bondage Addon Helpers"].objects:
+		obj.hide_set(False)
+	
+	modifiersource_obj = None
+	for obj in bpy.data.objects:
+		if obj.type == 'MESH' and "HAND MODIF SOURCE" in obj.name:
+			modifiersource_obj = obj
+			
+	bpy.context.view_layer.objects.active = mesh_obj
+	# This FOR-loop will create the same number of modifiers that the MODIFIER SOURCE mesh object has
+	# and then perform the actions within for each modifier
+	for modif in modifiersource_obj.modifiers:
+		# Set a tmp vert group for later
+		tmp_vertgroup = None
+		# Call this statement to see if the modifiers vert group is even in the obj's verts
+		if modif.vertex_group_b in mesh_obj.vertex_groups:
+			# Create the modifier (referencing to add the same modifier as the one in MODIFIER SOURCE
+			mesh_obj.modifiers.new(modif.name, modif.type)
+			# declare the modifier we are now interfacing with will be Part 0.0's "i'th" modifier
+			# This modifier index[-1] means the top modifier on the list. [-2] would mean the second to top
+			dest_mod = mesh_obj.modifiers[-1]
+			#next, check if the modifier used to anchor the bondage is a vertex group in the mesh
+			if modif.vertex_group_a not in mesh_obj.vertex_groups:
+				# then append the bondage bone to it
+				mesh_obj.vertex_groups.new(name=modif.vertex_group_a)
+
+			#then for each propertiy in the mod keys set the attributes
+			dest_mod.vertex_group_a = modif.vertex_group_a
+			dest_mod.vertex_group_b = modif.vertex_group_b
+
+			# check if the vertex group B applied
+			if dest_mod.vertex_group_b == modif.vertex_group_b:
+				# assign tmpvertgroup so it is retained after modifier is applied. 
+				tmp_vertgroup = modif.vertex_group_b
+			# set remaining properties for the modifier
+			dest_mod.mix_set = modif.mix_set
+			dest_mod.mix_mode = modif.mix_mode
+
+			# apply the modifier we just worked on
+			bpy.ops.object.modifier_apply(modifier=dest_mod.name)
+
+		# then if it applied new weights from a vertex, remove that vertex group from the mesh
+		if tmp_vertgroup != None:
+			mesh_obj.vertex_groups.remove(mesh_obj.vertex_groups[tmp_vertgroup])
+
+	for obj in bpy.data.collections["Bondage Addon Helpers"].objects:
+		obj.hide_set(True)
 class TransferHandFeet(bpy.types.Operator):
 	bl_idname = "object.transfer_handfeet"
 	bl_label = "Transfer HandFeet"
@@ -511,23 +566,44 @@ class TransferHandFeet(bpy.types.Operator):
 			handfeet_name = "Vanilla"
 		
 		handfeet_collection = bpy.data.collections['Hands/Feet']
+		# Show the hands
+		for obj in bpy.data.collections["Hands/Feet"].objects:
+			obj.hide_set(False)
 		# Transer the object over if the right name, then break
 		for obj in handfeet_collection.objects:
-			# find the right object
+			# find the right hand/feet object
 			if handfeet_name in obj.name:
+				# Get the armature from the bondage addon helpers
+				helper_armature = None
+				for obj2 in bpy.data.objects:
+					if obj2.type == 'ARMATURE' and "POSE SOURCE" in obj2.name:
+						helper_armature = obj2
+						break
+				# Add new armature modifier and set it to pose source.
+				armature_modifier = obj.modifiers.new(type='ARMATURE', name="Armature Modifier")
+				armature_modifier.object = helper_armature
+				# Do the weight transfers to it after applying the modifier
+				bpy.context.view_layer.objects.active = obj
+				while obj.modifiers: # Apply the modifier to set the pose
+					bpy.ops.object.modifier_apply(modifier=obj.modifiers[0].name)
+				# Do weight transfers
+				perform_locked_weight_transfers_hands(obj)
+				
 				# Add armature modifier with clothing mods n_root as the source
 				armature_modifier = obj.modifiers.new(type='ARMATURE', name="Armature Modifier")
 				armature_modifier.object = armature_obj # set the object to the parent
-				
 				# Then move it to the clothing mod collection
 				handfeet_collection.objects.unlink(obj)
 				collection.objects.link(obj)
 				# And set its parent to n_root
 				obj.parent = armature_obj
 				break
-		
 		# Deselect
-		bpy.ops.object.select_all(action='DESELECT')		
+		bpy.ops.object.select_all(action='DESELECT')	
+
+		# Hide hand/feet again
+		for obj in bpy.data.collections["Hands/Feet"].objects:
+			obj.hide_set(True)
 		# Done
 		return {'FINISHED'}
 		
