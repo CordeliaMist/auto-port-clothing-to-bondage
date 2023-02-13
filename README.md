@@ -13,4 +13,4 @@ All you should need to do is download the zip in the releases and import it into
 
 Alternatively, if you dont trust the releases zip, you can always download the repository folder as a zip, remove the gif folder, and then select that to install as a blender addon through blender.
 
-![](https://github.com/OasisAnimos/auto-port-clothing-to-bondage/blob/main/showcaseGIF/ah4.gif)
+![](https://github.com/CordeliaMist/auto-port-clothing-to-bondage/blob/main/showcaseGIF/ah2.gif)
