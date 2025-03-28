@@ -10,5 +10,3 @@ C.K.'s Auto-Port Clothing tool is designed to help ease the porting process for 
 I will be making updates to the addon to help make it easier to use, add more flags, functionalizing and even possibly more ease of use & smart detection.
 
 All you should need to do is download the zip in the releases and import it into blender. If you dont trust the code feel free to examine the code here. My horrible functionalization lol because i've barely touched python in my life.
-
-Alternatively, if you dont trust the releases zip, you can always download the repository folder as a zip, remove the gif folder, and then select that to install as a blender addon through blender.
